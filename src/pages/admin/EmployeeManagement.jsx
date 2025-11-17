@@ -17,7 +17,7 @@ const EmployeeManagement = () => {
     employeeId: '',
     phone: '',
     department: '',
-    designation: '',
+    position: '', // Changed from designation to position
     salary: '',
     joiningDate: '',
     address: '',
@@ -29,7 +29,7 @@ const EmployeeManagement = () => {
   const departments = [
     'AIML',
     'Backend',
-    'Frontend', 
+    'Frontend',
     'Flutter',
     'Design',
     'Testing',
@@ -68,7 +68,7 @@ const EmployeeManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -84,10 +84,11 @@ const EmployeeManagement = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: 'employee', // ✅ ADDED - Required field
         employeeId: formData.employeeId,
         phone: formData.phone,
         department: formData.department,
-        designation: formData.designation,
+        position: formData.position, // ✅ CHANGED from designation to position
         salary: Number(formData.salary),
         joiningDate: formData.joiningDate,
         address: {
@@ -119,7 +120,7 @@ const EmployeeManagement = () => {
       employeeId: '',
       phone: '',
       department: '',
-      designation: '',
+      position: '', // Changed from designation to position
       salary: '',
       joiningDate: '',
       address: '',
@@ -176,7 +177,7 @@ const EmployeeManagement = () => {
             Manage your team members ({filteredEmployees.length} {filteredEmployees.length === 1 ? 'employee' : 'employees'})
           </p>
         </div>
-        
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -220,7 +221,7 @@ const EmployeeManagement = () => {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Designation</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Position</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
@@ -267,11 +268,10 @@ const EmployeeManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{employee.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{employee.department}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{employee.designation}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{employee.position || employee.designation}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          employee.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {employee.status}
                         </span>
                       </td>
@@ -416,11 +416,11 @@ const EmployeeManagement = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Designation *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Position *</label>
                         <input
                           type="text"
-                          name="designation"
-                          value={formData.designation}
+                          name="position"
+                          value={formData.position}
                           onChange={handleInputChange}
                           required
                           placeholder="e.g. Senior Developer"

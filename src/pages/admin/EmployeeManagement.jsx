@@ -17,7 +17,7 @@ const EmployeeManagement = () => {
     employeeId: '',
     phone: '',
     department: '',
-    position: '', // Changed from designation to position
+    position: '',
     salary: '',
     joiningDate: '',
     address: '',
@@ -25,7 +25,6 @@ const EmployeeManagement = () => {
     emergencyContactNumber: '',
   });
 
-  // Custom department list
   const departments = [
     'AIML',
     'Backend',
@@ -84,11 +83,11 @@ const EmployeeManagement = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: 'employee',  // ← ADD THIS LINE
+        role: 'employee',
         employeeId: formData.employeeId,
         phone: formData.phone,
         department: formData.department,
-        position: formData.designation,  // ← Change designation to position
+        position: formData.position,  // ✅ FIXED: Changed from formData.designation to formData.position
         salary: Number(formData.salary),
         joiningDate: formData.joiningDate,
         address: {
@@ -99,6 +98,8 @@ const EmployeeManagement = () => {
           phone: formData.emergencyContactNumber,
         },
       };
+
+      console.log('📤 Sending payload:', payload);  // Debug log
 
       await api.post('/users', payload);
       toast.success('Employee created successfully!');
@@ -120,7 +121,7 @@ const EmployeeManagement = () => {
       employeeId: '',
       phone: '',
       department: '',
-      position: '', // Changed from designation to position
+      position: '',
       salary: '',
       joiningDate: '',
       address: '',
@@ -163,7 +164,6 @@ const EmployeeManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -189,7 +189,6 @@ const EmployeeManagement = () => {
         </motion.button>
       </motion.div>
 
-      {/* Search Bar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -206,7 +205,6 @@ const EmployeeManagement = () => {
         />
       </motion.div>
 
-      {/* Employee Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -303,7 +301,6 @@ const EmployeeManagement = () => {
         </div>
       </motion.div>
 
-      {/* Add Employee Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -335,7 +332,6 @@ const EmployeeManagement = () => {
 
               <div className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Personal Information */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                       <span className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-sm font-bold">1</span>
@@ -393,7 +389,6 @@ const EmployeeManagement = () => {
                     </div>
                   </div>
 
-                  {/* Professional Information */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                       <span className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">2</span>
@@ -453,7 +448,6 @@ const EmployeeManagement = () => {
                     </div>
                   </div>
 
-                  {/* Login Credentials */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                       <span className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm font-bold">3</span>
@@ -488,7 +482,6 @@ const EmployeeManagement = () => {
                     </div>
                   </div>
 
-                  {/* Additional Information */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                       <span className="w-8 h-8 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-sm font-bold">4</span>
@@ -533,7 +526,6 @@ const EmployeeManagement = () => {
                     </div>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                     <motion.button
                       type="button"

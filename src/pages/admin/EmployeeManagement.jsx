@@ -84,11 +84,11 @@ const EmployeeManagement = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: 'employee', // ✅ ADDED - Required field
+        role: 'employee',  // ← ADD THIS LINE
         employeeId: formData.employeeId,
         phone: formData.phone,
         department: formData.department,
-        position: formData.position, // ✅ CHANGED from designation to position
+        position: formData.designation,  // ← Change designation to position
         salary: Number(formData.salary),
         joiningDate: formData.joiningDate,
         address: {

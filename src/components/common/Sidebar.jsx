@@ -11,6 +11,7 @@ import {
   FiGrid,
   FiCheckSquare,
   FiBarChart2,
+  FiFolder,
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -23,6 +24,7 @@ const Sidebar = () => {
     { name: 'Leave Management', path: '/admin/leaves', icon: FiFileText },
     { name: 'Team Management', path: '/admin/teams', icon: FiGrid },
     { name: 'Task Management', path: '/admin/tasks', icon: FiCheckSquare },
+    { name: 'Projects', path: '/admin/projects', icon: FiFolder },
     { name: 'Analytics & Reports', path: '/admin/analytics', icon: FiBarChart2 },
     { name: 'Team Chat', path: '/admin/chat', icon: FiMessageSquare },
     { name: 'Settings', path: '/admin/settings', icon: FiSettings },
@@ -33,6 +35,7 @@ const Sidebar = () => {
     { name: 'My Attendance', path: '/employee/attendance', icon: FiCalendar },
     { name: 'Leave Applications', path: '/employee/leaves', icon: FiFileText },
     { name: 'My Tasks', path: '/employee/tasks', icon: FiCheckSquare },
+    { name: 'Projects', path: '/employee/projects', icon: FiFolder },
     { name: 'My Analytics', path: '/employee/analytics', icon: FiBarChart2 },
     { name: 'Team Chat', path: '/employee/chat', icon: FiMessageSquare },
     { name: 'My Profile', path: '/employee/profile', icon: FiUser },

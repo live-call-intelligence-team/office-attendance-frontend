@@ -15,7 +15,9 @@ import {
   FiLogOut,
   FiHome,
   FiBriefcase,
-  FiMapPin,
+  FiCoffee,
+  FiPlay,
+  FiPause,
 } from 'react-icons/fi';
 import { Line } from 'react-chartjs-2';
 
@@ -26,7 +28,8 @@ const EmployeeDashboard = () => {
   const [clockingIn, setClockingIn] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [workDuration, setWorkDuration] = useState('0h 0m');
+  const [liveWorkHours, setLiveWorkHours] = useState('0h 0m');
+  const [liveBreakHours, setLiveBreakHours] = useState('0h 0m');
 
   useEffect(() => {
     fetchDashboard();
@@ -37,12 +40,40 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-      if (dashboard?.todayAttendance?.clockIn && !dashboard?.todayAttendance?.clockOut) {
-        calculateDuration();
-      }
+      calculateLiveDurations();
     }, 1000);
     return () => clearInterval(timer);
   }, [dashboard]);
+
+  const calculateLiveDurations = () => {
+    const today = dashboard?.todayAttendance;
+    if (!today?.clockIn) return;
+
+    // Calculate work hours
+    const clockInTime = new Date(today.clockIn);
+    const currentOrClockOut = today.clockOut ? new Date(today.clockOut) : new Date();
+    const workMs = currentOrClockOut - clockInTime;
+    
+    const workHours = Math.floor(workMs / (1000 * 60 * 60));
+    const workMinutes = Math.floor((workMs % (1000 * 60 * 60)) / (1000 * 60));
+    setLiveWorkHours(`${workHours}h ${workMinutes}m`);
+
+    // Calculate break hours
+    let breakMs = 0;
+    if (today.breaks && today.breaks.length > 0) {
+      today.breaks.forEach(brk => {
+        if (brk.start) {
+          const breakStart = new Date(brk.start);
+          const breakEnd = brk.end ? new Date(brk.end) : new Date();
+          breakMs += (breakEnd - breakStart);
+        }
+      });
+    }
+    
+    const breakHours = Math.floor(breakMs / (1000 * 60 * 60));
+    const breakMinutes = Math.floor((breakMs % (1000 * 60 * 60)) / (1000 * 60));
+    setLiveBreakHours(`${breakHours}h ${breakMinutes}m`);
+  };
 
   const fetchDashboard = async () => {
     try {
@@ -55,19 +86,6 @@ const EmployeeDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateDuration = () => {
-    if (!dashboard?.todayAttendance?.clockIn) return;
-
-    const start = new Date(dashboard.todayAttendance.clockIn);
-    const now = new Date();
-    const diff = now - start;
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    setWorkDuration(`${hours}h ${minutes}m`);
   };
 
   const handleClockIn = async (location) => {
@@ -99,6 +117,28 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const handleStartBreak = async () => {
+    try {
+      await api.post('/attendance/start-break');
+      toast.success('Break started');
+      fetchDashboard();
+    } catch (error) {
+      console.error('Error starting break:', error);
+      toast.error(error.response?.data?.message || 'Failed to start break');
+    }
+  };
+
+  const handleEndBreak = async () => {
+    try {
+      await api.post('/attendance/end-break');
+      toast.success('Break ended');
+      fetchDashboard();
+    } catch (error) {
+      console.error('Error ending break:', error);
+      toast.error(error.response?.data?.message || 'Failed to end break');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -121,6 +161,7 @@ const EmployeeDashboard = () => {
   const todayAttendance = dashboard.todayAttendance;
   const isClocked = todayAttendance?.clockIn && !todayAttendance?.clockOut;
   const isPending = todayAttendance?.status === 'pending';
+  const isOnBreak = todayAttendance?.breaks?.some(brk => brk.start && !brk.end);
 
   const chartData = {
     labels: dashboard.chartData?.map(d => {
@@ -164,149 +205,205 @@ const EmployeeDashboard = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Welcome back, {user?.name}! 👋
           </h1>
-          <p className="text-gray-600 text-lg">{currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          <p className="text-gray-500 text-3xl font-bold mt-2">{currentTime.toLocaleTimeString()}</p>
+          <p className="text-gray-600 text-lg">
+            {currentTime.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
+          <p className="text-gray-500 text-3xl font-bold mt-2">
+            {currentTime.toLocaleTimeString()}
+          </p>
         </div>
 
-        {/* Clock In/Out Card */}
+        {/* Compact Clock In/Out Card */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-xl p-8 mb-8 border border-gray-100"
+          className="bg-white rounded-3xl shadow-xl p-6 mb-8 border border-gray-100"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Today's Attendance</h2>
-              
-              {isPending && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
-                  <p className="text-yellow-800 font-medium">⏳ Your clock-in is pending admin approval</p>
-                </div>
-              )}
+          {/* Pending Status Alert */}
+          {isPending && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+              <p className="text-yellow-800 font-medium">
+                ⏳ Your clock-in is pending admin approval
+              </p>
+            </div>
+          )}
 
-              {todayAttendance?.clockIn ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <FiLogIn className="text-green-500 text-xl" />
-                    <div>
-                      <p className="text-sm text-gray-500">Clocked In</p>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {new Date(todayAttendance.clockIn).toLocaleTimeString('en-US', {
+          <div className="flex items-center justify-between gap-6">
+            {/* Left: Time Info - Compact Grid */}
+            <div className="flex-1 grid grid-cols-2 gap-4">
+              {/* Clock In Time */}
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <FiLogIn className="text-green-600 text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Clock In</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {todayAttendance?.clockIn
+                      ? new Date(todayAttendance.clockIn).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-
-                  {todayAttendance.clockOut ? (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <FiLogOut className="text-red-500 text-xl" />
-                        <div>
-                          <p className="text-sm text-gray-500">Clocked Out</p>
-                          <p className="text-lg font-semibold text-gray-800">
-                            {new Date(todayAttendance.clockOut).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <FiClock className="text-blue-500 text-xl" />
-                        <div>
-                          <p className="text-sm text-gray-500">Total Hours</p>
-                          <p className="text-lg font-semibold text-gray-800">
-                            {todayAttendance.totalHours?.toFixed(2) || '0.00'} hours
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <FiActivity className="text-blue-500 text-xl animate-pulse" />
-                      <div>
-                        <p className="text-sm text-gray-500">Working for</p>
-                        <p className="text-lg font-semibold text-blue-600">{workDuration}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <FiMapPin className="text-purple-500 text-xl" />
-                    <div>
-                      <p className="text-sm text-gray-500">Location</p>
-                      <p className="text-lg font-semibold text-gray-800 capitalize">
-                        {todayAttendance.workLocation || 'Office'}
-                      </p>
-                    </div>
-                  </div>
+                        })
+                      : '--:--'}
+                  </p>
                 </div>
-              ) : (
-                <p className="text-gray-500">You haven't clocked in yet today</p>
-              )}
+              </div>
+
+              {/* Clock Out Time */}
+              <div className="flex items-center gap-3">
+                <div className="bg-red-100 p-3 rounded-xl">
+                  <FiLogOut className="text-red-600 text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Clock Out</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {todayAttendance?.clockOut
+                      ? new Date(todayAttendance.clockOut).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : isClocked ? 'Working...' : '--:--'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Work Hours */}
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <FiClock className="text-blue-600 text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Work Hours</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {todayAttendance?.clockOut
+                      ? `${todayAttendance.totalHours?.toFixed(2) || '0.00'}h`
+                      : isClocked
+                      ? liveWorkHours
+                      : '0h 0m'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Break Hours */}
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-100 p-3 rounded-xl">
+                  <FiCoffee className="text-orange-600 text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Break Time</p>
+                  <p className="text-lg font-bold text-orange-600">
+                    {todayAttendance?.clockOut
+                      ? `${todayAttendance.breakDuration?.toFixed(2) || '0.00'}h`
+                      : liveBreakHours}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="relative">
-              {!todayAttendance?.clockIn ? (
-                <>
+            {/* Right: Action Buttons */}
+            <div className="flex flex-col gap-3">
+              {/* Clock In/Out Button */}
+              <div className="relative">
+                {!todayAttendance?.clockIn ? (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                      disabled={clockingIn}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 w-48"
+                    >
+                      <FiLogIn className="text-xl" />
+                      {clockingIn ? 'Clocking In...' : 'Clock In'}
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {showLocationDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-10 min-w-[200px]"
+                        >
+                          <button
+                            onClick={() => handleClockIn('office')}
+                            className="w-full px-4 py-3 hover:bg-blue-50 flex items-center gap-3 transition-colors"
+                          >
+                            <FiBriefcase className="text-blue-600" />
+                            <span className="font-medium">Office</span>
+                          </button>
+                          <button
+                            onClick={() => handleClockIn('home')}
+                            className="w-full px-4 py-3 hover:bg-green-50 flex items-center gap-3 transition-colors"
+                          >
+                            <FiHome className="text-green-600" />
+                            <span className="font-medium">Work from Home</span>
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                ) : !todayAttendance?.clockOut && !isPending ? (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                    onClick={handleClockOut}
                     disabled={clockingIn}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                    className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 w-48"
                   >
-                    <FiLogIn className="text-2xl" />
-                    {clockingIn ? 'Clocking In...' : 'Clock In'}
+                    <FiLogOut className="text-xl" />
+                    {clockingIn ? 'Clocking Out...' : 'Clock Out'}
                   </motion.button>
+                ) : todayAttendance?.clockOut ? (
+                  <div className="bg-gray-100 px-6 py-3 rounded-xl w-48 flex items-center justify-center gap-2">
+                    <FiCheckCircle className="text-green-500 text-xl" />
+                    <span className="text-gray-600 font-medium">Completed</span>
+                  </div>
+                ) : null}
+              </div>
 
-                  <AnimatePresence>
-                    {showLocationDropdown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-10 min-w-[200px]"
-                      >
-                        <button
-                          onClick={() => handleClockIn('office')}
-                          className="w-full px-4 py-3 hover:bg-blue-50 flex items-center gap-3 transition-colors"
-                        >
-                          <FiBriefcase className="text-blue-600" />
-                          <span className="font-medium">Office</span>
-                        </button>
-                        <button
-                          onClick={() => handleClockIn('home')}
-                          className="w-full px-4 py-3 hover:bg-green-50 flex items-center gap-3 transition-colors"
-                        >
-                          <FiHome className="text-green-600" />
-                          <span className="font-medium">Work from Home</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              ) : !todayAttendance?.clockOut && !isPending ? (
+              {/* Break Button */}
+              {isClocked && !isPending && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={handleClockOut}
-                  disabled={clockingIn}
-                  className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                  onClick={isOnBreak ? handleEndBreak : handleStartBreak}
+                  className={`px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 w-48 ${
+                    isOnBreak
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                      : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white'
+                  }`}
                 >
-                  <FiLogOut className="text-2xl" />
-                  {clockingIn ? 'Clocking Out...' : 'Clock Out'}
+                  {isOnBreak ? (
+                    <>
+                      <FiPlay className="text-xl" />
+                      End Break
+                    </>
+                  ) : (
+                    <>
+                      <FiPause className="text-xl" />
+                      Start Break
+                    </>
+                  )}
                 </motion.button>
-              ) : todayAttendance?.clockOut ? (
-                <div className="bg-gray-100 px-8 py-4 rounded-2xl">
-                  <FiCheckCircle className="text-green-500 text-4xl mx-auto" />
-                  <p className="text-gray-600 font-medium mt-2">Completed</p>
-                </div>
-              ) : null}
+              )}
             </div>
           </div>
+
+          {/* Location Badge */}
+          {todayAttendance?.workLocation && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <span className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium">
+                <FiBriefcase className="text-lg" />
+                Working from: <span className="capitalize font-bold">{todayAttendance.workLocation}</span>
+              </span>
+            </div>
+          )}
         </motion.div>
 
         {/* Stats Cards */}

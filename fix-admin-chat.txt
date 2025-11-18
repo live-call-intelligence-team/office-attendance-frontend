@@ -1,0 +1,10 @@
+# Line to find:
+await api.post('/messages', {
+  channel: activeChannel,
+  content: messageInput,
+});
+
+# Replace with:
+await api.post(`/messages/${activeChannel}`, {
+  content: messageInput,
+});

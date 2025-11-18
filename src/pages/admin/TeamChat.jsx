@@ -86,8 +86,7 @@ const TeamChat = () => {
 
     try {
       setSending(true);
-      await api.post('/messages', {
-        channel: activeChannel,
+      await api.post(`/messages/${activeChannel}`, {
         content: messageInput,
       });
 

@@ -1,0 +1,5 @@
+# Line to find:
+await api.post('/messages', messageData);
+
+# Replace with:
+await api.post(`/messages/${activeChannel}`, messageData);

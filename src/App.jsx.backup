@@ -14,8 +14,6 @@ import AttendanceManagement from './pages/admin/AttendanceManagement';
 import LeaveManagement from './pages/admin/LeaveManagement';
 import TeamManagement from './pages/admin/TeamManagement';
 import TaskManagement from './pages/admin/TaskManagement';
-import Projects from './pages/admin/Projects';
-import ProjectDetail from './pages/admin/ProjectDetail';
 import Analytics from './pages/admin/Analytics';
 import AdminSettings from './pages/admin/Settings';
 import AdminTeamChat from './pages/admin/TeamChat';
@@ -33,8 +31,8 @@ import TeamChat from './pages/employee/TeamChat';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
@@ -56,8 +54,6 @@ function App() {
             <Route path="leaves" element={<LeaveManagement />} />
             <Route path="teams" element={<TeamManagement />} />
             <Route path="tasks" element={<TaskManagement />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="chat" element={<AdminTeamChat />} />
             <Route path="settings" element={<AdminSettings />} />
@@ -77,17 +73,30 @@ function App() {
             <Route path="attendance" element={<MyAttendance />} />
             <Route path="leaves" element={<MyLeaves />} />
             <Route path="tasks" element={<MyTasks />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="analytics" element={<MyAnalytics />} />
             <Route path="chat" element={<TeamChat />} />
             <Route path="profile" element={<MyProfile />} />
             <Route path="settings" element={<EmployeeSettings />} />
           </Route>
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </Router>
-      <ToastContainer position="top-right" autoClose={3000} />
-    </AuthProvider>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      </AuthProvider>
+    </Router>
   );
 }
 

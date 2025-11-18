@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setUser(null);
     }
-    
+
     setLoading(false);
   };
 
@@ -37,9 +37,9 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔐 LOGIN: Attempting login for', email);
       const response = await api.post('/auth/login', { email, password });
-      
+
       console.log('📥 Login response:', response.data);
-      
+
       // Backend structure: { success: true, data: { user info }, token: "..." }
       const token = response.data.token;
       const userData = response.data.data;
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
       // Store in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       console.log('💾 Data stored in localStorage');
 
       // Set user state
@@ -63,8 +63,8 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Login successful - User role:', userData.role);
 
       // Return success with user role for navigation
-      return { 
-        success: true, 
+      return {
+        success: true,
         role: userData.role,
         user: userData
       };
